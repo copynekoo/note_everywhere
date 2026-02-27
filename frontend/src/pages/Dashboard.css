@@ -1,0 +1,18 @@
+.dashboard-hero {
+    margin-bottom: var(--space-10);
+}
+
+.dashboard-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    margin-bottom: var(--space-2);
+}
+
+.dashboard-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+}
+
+.dashboard-section {
+    margin-bottom: var(--space-10);
+}

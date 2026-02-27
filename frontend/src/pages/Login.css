@@ -1,0 +1,82 @@
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    position: relative;
+    overflow: hidden;
+}
+
+.login-backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 50% at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 70% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%);
+}
+
+.login-container {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    z-index: 1;
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.login-logo {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: var(--space-4);
+}
+
+.login-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-primary-hover), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--space-2);
+}
+
+.login-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.login-card {
+    padding: var(--space-8);
+}
+
+.login-card form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.register-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.login-error {
+    padding: var(--space-3) var(--space-4);
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--accent-danger);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+}
+
+.login-submit {
+    width: 100%;
+    margin-top: var(--space-2);
+}

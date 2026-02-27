@@ -1,0 +1,125 @@
+.browse-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    margin-bottom: var(--space-2);
+}
+
+.browse-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-8);
+}
+
+.faculty-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.faculty-item {
+    overflow: hidden;
+    padding: 0;
+}
+
+.faculty-item:hover {
+    transform: none;
+}
+
+.faculty-header,
+.major-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    text-align: left;
+}
+
+.faculty-header:hover,
+.major-header:hover {
+    background: var(--bg-glass);
+}
+
+.faculty-icon,
+.major-icon {
+    font-size: 1.3rem;
+}
+
+.faculty-name,
+.major-name {
+    flex: 1;
+}
+
+.expand-icon {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+}
+
+.expand-icon.open {
+    transform: rotate(180deg);
+}
+
+.major-list {
+    border-top: 1px solid var(--border-subtle);
+    padding: 0 var(--space-4);
+}
+
+.major-item {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.major-item:last-child {
+    border-bottom: none;
+}
+
+.major-header {
+    padding: var(--space-4);
+    font-size: var(--font-size-sm);
+}
+
+.subject-list {
+    padding: 0 var(--space-4) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.subject-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-glass);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    text-decoration: none !important;
+    color: var(--text-primary) !important;
+}
+
+.subject-item:hover {
+    background: var(--bg-card-hover);
+}
+
+.subject-name {
+    flex: 1;
+    font-size: var(--font-size-sm);
+}
+
+.subject-year {
+    flex-shrink: 0;
+}
+
+.no-subjects {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    padding: var(--space-3);
+}
