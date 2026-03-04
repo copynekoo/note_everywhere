@@ -9,6 +9,7 @@ interface NoteCardProps {
         subject_name: string;
         subject_code: string;
         uploader_student_id: string;
+        uploader_name?: string;
         rating_score: number;
         comment_count?: number;
         file_type?: string;
@@ -54,7 +55,9 @@ export default function NoteCard({ note }: NoteCardProps) {
             )}
             <div className="note-card-meta">
                 <span className="meta-item">
-                    🎓 {note.uploader_student_id.slice(0, 4)}...
+                    🎓 {note.uploader_name
+                        ? `${note.uploader_name} (${note.uploader_student_id.slice(0, 4)}...)`
+                        : `${note.uploader_student_id.slice(0, 4)}...`}
                 </span>
                 <span className={`meta-item score ${scoreClass}`}>
                     {note.rating_score > 0 ? '▲' : note.rating_score < 0 ? '▼' : '•'} {note.rating_score}

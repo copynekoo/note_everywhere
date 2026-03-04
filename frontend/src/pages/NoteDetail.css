@@ -55,7 +55,20 @@
     padding: var(--space-6);
     margin-bottom: var(--space-6);
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Clickable Student ID */
+.clickable-student-id {
+    cursor: pointer;
+    color: var(--text-accent);
+    transition: color var(--transition-fast);
+}
+
+.clickable-student-id:hover {
+    color: var(--accent-primary-hover);
+    text-decoration: underline;
 }
 
 .file-viewer:hover {

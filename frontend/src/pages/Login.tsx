@@ -1,4 +1,5 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
@@ -17,6 +18,7 @@ export default function Login() {
     const [facultyId, setFacultyId] = useState<number>(0);
     const [majorId, setMajorId] = useState<number>(0);
     const [year, setYear] = useState<number>(1);
+    const [displayName, setDisplayName] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -61,7 +63,7 @@ export default function Login() {
         }
         setLoading(true);
         try {
-            await register({ studentId, facultyId, majorId, year });
+            await register({ studentId, facultyId, majorId, year, name: displayName.trim() || undefined });
             navigate('/dashboard');
         } catch (err: any) {
             setError(err.response?.data?.error || 'Registration failed');
@@ -149,6 +151,18 @@ export default function Login() {
                                     <select id="reg-year" className="select" value={year} onChange={(e) => setYear(Number(e.target.value))} required>
                                         {[1, 2, 3, 4, 5, 6].map((y) => <option key={y} value={y}>Year {y} ({currentYear + y - 1})</option>)}
                                     </select>
+                                </div>
+                                <div className="input-group">
+                                    <label htmlFor="reg-name">Display Name (optional)</label>
+                                    <input
+                                        id="reg-name"
+                                        className="input"
+                                        type="text"
+                                        placeholder="e.g. Somchai"
+                                        value={displayName}
+                                        onChange={(e) => setDisplayName(e.target.value)}
+                                        maxLength={100}
+                                    />
                                 </div>
                             </div>
                             <button type="submit" className="btn btn-primary btn-lg login-submit" disabled={loading} id="register-submit">

@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import './Navbar.css';
 
 export default function Navbar() {
-    const { user, logout } = useAuth();
+    const { user, logout, updateProfile } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    const [editingName, setEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState(user?.name || '');
+    const [saving, setSaving] = useState(false);
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -14,6 +18,27 @@ export default function Navbar() {
         logout();
         navigate('/');
     };
+
+    const handleSaveName = async () => {
+        if (!user) return;
+        setSaving(true);
+        try {
+            await updateProfile({
+                facultyId: user.faculty_id!,
+                majorId: user.major_id!,
+                year: user.year!,
+                name: nameInput.trim(),
+            });
+            setEditingName(false);
+        } catch (err) {
+            console.error(err);
+        }
+        setSaving(false);
+    };
+
+    const displayIdentity = user?.name
+        ? `${user.name} (${user.student_id?.slice(0, 4)}...)`
+        : `${user?.student_id?.slice(0, 4)}...${user?.student_id?.slice(-3)}`;
 
     return (
         <nav className="navbar" id="main-navbar">
@@ -41,9 +66,41 @@ export default function Navbar() {
                 <div className="navbar-actions">
                     <NotificationBell />
                     <div className="user-menu">
-                        <span className="user-id" title={user?.student_id || ''}>
-                            🎓 {user?.student_id?.slice(0, 4)}...{user?.student_id?.slice(-3)}
-                        </span>
+                        {editingName ? (
+                            <div className="name-edit-inline">
+                                <input
+                                    className="input name-edit-input"
+                                    type="text"
+                                    value={nameInput}
+                                    onChange={(e) => setNameInput(e.target.value)}
+                                    placeholder="Display name"
+                                    maxLength={100}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveName();
+                                        if (e.key === 'Escape') setEditingName(false);
+                                    }}
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={handleSaveName} disabled={saving}>
+                                    {saving ? '...' : '✓'}
+                                </button>
+                                <button className="btn btn-ghost btn-sm" onClick={() => setEditingName(false)}>✕</button>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="user-id" title={user?.student_id || ''}>
+                                    🎓 {displayIdentity}
+                                </span>
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => { setNameInput(user?.name || ''); setEditingName(true); }}
+                                    title="Edit display name"
+                                    id="edit-name-btn"
+                                >
+                                    ✏️
+                                </button>
+                            </>
+                        )}
                         <button className="btn btn-ghost btn-sm" onClick={handleLogout} id="logout-btn">
                             Logout
                         </button>

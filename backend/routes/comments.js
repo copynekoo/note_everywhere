@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/note/:noteId', async (req, res) => {
     try {
         const result = await db.query(`
-      SELECT c.*, u.student_id as commenter_student_id
+      SELECT c.*, u.student_id as commenter_student_id, u.name as commenter_name
       FROM comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.note_id = $1

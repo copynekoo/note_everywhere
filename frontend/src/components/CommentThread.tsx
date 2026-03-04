@@ -1,6 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import StudentProfileModal from './StudentProfileModal';
 import './CommentThread.css';
 
 interface Comment {
@@ -10,6 +12,7 @@ interface Comment {
     parent_id: number | null;
     content: string;
     commenter_student_id: string;
+    commenter_name?: string;
     created_at: string;
     updated_at: string;
 }
@@ -27,6 +30,7 @@ export default function CommentThread({ noteId, comments, onRefresh }: CommentTh
     const [editId, setEditId] = useState<number | null>(null);
     const [editContent, setEditContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -70,10 +74,22 @@ export default function CommentThread({ noteId, comments, onRefresh }: CommentTh
     const topLevel = comments.filter((c) => !c.parent_id);
     const replies = (parentId: number) => comments.filter((c) => c.parent_id === parentId);
 
+    const formatCommenter = (c: Comment) => {
+        return c.commenter_name
+            ? `${c.commenter_name} (${c.commenter_student_id})`
+            : c.commenter_student_id;
+    };
+
     const renderComment = (c: Comment, depth: number = 0) => (
         <div key={c.id} className={`comment ${depth > 0 ? 'reply' : ''}`} style={{ marginLeft: depth * 24 }} id={`comment-${c.id}`}>
             <div className="comment-header">
-                <span className="comment-author">🎓 {c.commenter_student_id}</span>
+                <span
+                    className="comment-author clickable-student-id"
+                    onClick={() => setProfileStudentId(c.commenter_student_id)}
+                    title="View profile"
+                >
+                    🎓 {formatCommenter(c)}
+                </span>
                 <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
             </div>
 
@@ -141,6 +157,14 @@ export default function CommentThread({ noteId, comments, onRefresh }: CommentTh
                     topLevel.map((c) => renderComment(c))
                 )}
             </div>
+
+            {/* Student Profile Modal */}
+            {profileStudentId && (
+                <StudentProfileModal
+                    studentId={profileStudentId}
+                    onClose={() => setProfileStudentId(null)}
+                />
+            )}
         </div>
     );
 }

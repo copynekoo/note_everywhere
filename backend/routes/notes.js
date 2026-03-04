@@ -2,6 +2,8 @@ const express = require('express');
 const db = require('../db');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 // GET /api/notes?subjectId=...&sort=...&userId=...&search=...
@@ -9,7 +11,7 @@ router.get('/', async (req, res) => {
     try {
         const { subjectId, sort, userId, search, limit = 20, offset = 0 } = req.query;
         let query = `
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         COALESCE(SUM(r.value), 0) as rating_score,
         COUNT(DISTINCT r.id) as rating_count,
@@ -38,7 +40,7 @@ router.get('/', async (req, res) => {
             paramIndex++;
         }
 
-        query += ' GROUP BY n.id, u.student_id, s.name, s.code';
+        query += ' GROUP BY n.id, u.student_id, u.name, s.name, s.code';
 
         switch (sort) {
             case 'popular':
@@ -71,7 +73,7 @@ router.get('/dashboard', auth, async (req, res) => {
 
         // Get recommended notes (same major)
         const recommended = await db.query(`
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         COALESCE(SUM(r.value), 0) as rating_score,
         COUNT(DISTINCT c.id) as comment_count
@@ -81,14 +83,14 @@ router.get('/dashboard', auth, async (req, res) => {
       LEFT JOIN ratings r ON r.note_id = n.id
       LEFT JOIN comments c ON c.note_id = n.id
       WHERE n.is_public = true AND s.major_id = $1
-      GROUP BY n.id, u.student_id, s.name, s.code
+      GROUP BY n.id, u.student_id, u.name, s.name, s.code
       ORDER BY n.created_at DESC
       LIMIT 10
     `, [user.major_id]);
 
         // Get popular notes across the university
         const popular = await db.query(`
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         COALESCE(SUM(r.value), 0) as rating_score,
         COUNT(DISTINCT c.id) as comment_count
@@ -98,7 +100,7 @@ router.get('/dashboard', auth, async (req, res) => {
       LEFT JOIN ratings r ON r.note_id = n.id
       LEFT JOIN comments c ON c.note_id = n.id
       WHERE n.is_public = true
-      GROUP BY n.id, u.student_id, s.name, s.code
+      GROUP BY n.id, u.student_id, u.name, s.name, s.code
       HAVING COALESCE(SUM(r.value), 0) > 0
       ORDER BY rating_score DESC
       LIMIT 10
@@ -106,7 +108,7 @@ router.get('/dashboard', auth, async (req, res) => {
 
         // Get recent notes from user's faculty
         const recent = await db.query(`
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         COALESCE(SUM(r.value), 0) as rating_score,
         COUNT(DISTINCT c.id) as comment_count
@@ -117,7 +119,7 @@ router.get('/dashboard', auth, async (req, res) => {
       LEFT JOIN ratings r ON r.note_id = n.id
       LEFT JOIN comments c ON c.note_id = n.id
       WHERE n.is_public = true AND m.faculty_id = $1
-      GROUP BY n.id, u.student_id, s.name, s.code
+      GROUP BY n.id, u.student_id, u.name, s.name, s.code
       ORDER BY n.created_at DESC
       LIMIT 10
     `, [user.faculty_id]);
@@ -137,7 +139,7 @@ router.get('/dashboard', auth, async (req, res) => {
 router.get('/:noteId', async (req, res) => {
     try {
         const result = await db.query(`
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         m.name as major_name, f.name as faculty_name,
         COALESCE(SUM(r.value), 0) as rating_score,
@@ -152,7 +154,7 @@ router.get('/:noteId', async (req, res) => {
       LEFT JOIN ratings r ON r.note_id = n.id
       LEFT JOIN comments c ON c.note_id = n.id
       WHERE n.id = $1
-      GROUP BY n.id, u.student_id, s.name, s.code, m.name, f.name
+      GROUP BY n.id, u.student_id, u.name, s.name, s.code, m.name, f.name
     `, [req.params.noteId]);
 
         if (result.rows.length === 0) {
@@ -242,11 +244,22 @@ router.put('/:noteId', auth, async (req, res) => {
 // DELETE /api/notes/:noteId
 router.delete('/:noteId', auth, async (req, res) => {
     try {
-        const noteCheck = await db.query('SELECT user_id FROM notes WHERE id = $1', [req.params.noteId]);
+        const noteCheck = await db.query('SELECT user_id, file_path FROM notes WHERE id = $1', [req.params.noteId]);
         if (noteCheck.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
         if (noteCheck.rows[0].user_id !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
+        const filePath = noteCheck.rows[0].file_path;
+
         await db.query('DELETE FROM notes WHERE id = $1', [req.params.noteId]);
+
+        // Attempt to delete file from local storage
+        if (filePath) {
+            const absolutePath = path.join(__dirname, '..', 'uploads', filePath);
+            fs.unlink(absolutePath, (err) => {
+                if (err) console.error('Failed to delete file from local storage:', err);
+            });
+        }
+
         res.json({ message: 'Note deleted' });
     } catch (err) {
         console.error('Note delete error:', err);
@@ -328,7 +341,7 @@ router.get('/:noteId/related', async (req, res) => {
         if (noteRes.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
 
         const result = await db.query(`
-      SELECT n.*, u.student_id as uploader_student_id,
+      SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
         s.name as subject_name, s.code as subject_code,
         COALESCE(SUM(r.value), 0) as rating_score
       FROM notes n
@@ -336,7 +349,7 @@ router.get('/:noteId/related', async (req, res) => {
       JOIN subjects s ON n.subject_id = s.id
       LEFT JOIN ratings r ON r.note_id = n.id
       WHERE n.subject_id = $1 AND n.id != $2 AND n.is_public = true
-      GROUP BY n.id, u.student_id, s.name, s.code
+      GROUP BY n.id, u.student_id, u.name, s.name, s.code
       ORDER BY n.created_at DESC
       LIMIT 5
     `, [noteRes.rows[0].subject_id, req.params.noteId]);

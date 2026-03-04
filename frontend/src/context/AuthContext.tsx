@@ -4,6 +4,7 @@ import api from '../api';
 interface User {
     id: number;
     student_id: string;
+    name?: string | null;
     faculty_id: number | null;
     major_id: number | null;
     year: number | null;
@@ -16,8 +17,8 @@ interface AuthContextType {
     token: string | null;
     loading: boolean;
     login: (studentId: string) => Promise<void>;
-    register: (data: { studentId: string; facultyId: number; majorId: number; year: number }) => Promise<void>;
-    updateProfile: (data: { facultyId: number; majorId: number; year: number }) => Promise<void>;
+    register: (data: { studentId: string; facultyId: number; majorId: number; year: number; name?: string }) => Promise<void>;
+    updateProfile: (data: { facultyId: number; majorId: number; year: number; name?: string }) => Promise<void>;
     logout: () => void;
 }
 
@@ -50,12 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistAuth(res.data.user, res.data.token);
     };
 
-    const register = async (data: { studentId: string; facultyId: number; majorId: number; year: number }) => {
+    const register = async (data: { studentId: string; facultyId: number; majorId: number; year: number; name?: string }) => {
         const res = await api.post('/auth/register', data);
         persistAuth(res.data.user, res.data.token);
     };
 
-    const updateProfile = async (data: { facultyId: number; majorId: number; year: number }) => {
+    const updateProfile = async (data: { facultyId: number; majorId: number; year: number; name?: string }) => {
         const res = await api.put('/auth/profile', data);
         const updated = { ...user, ...res.data } as User;
         setUser(updated);

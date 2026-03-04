@@ -1,16 +1,24 @@
-import { useState, useEffect, useRef, FormEvent, DragEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { FormEvent, DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import './UploadNote.css';
 
+interface Faculty { id: number; name: string; }
+interface Major { id: number; name: string; faculty_id: number; }
 interface Subject { id: number; code: string; name: string; year_level: number; }
 
 export default function UploadNote() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [faculties, setFaculties] = useState<Faculty[]>([]);
+    const [majors, setMajors] = useState<Major[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [selectedFacultyId, setSelectedFacultyId] = useState<string>('');
+    const [selectedMajorId, setSelectedMajorId] = useState<string>('');
     const [subjectId, setSubjectId] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -21,11 +29,48 @@ export default function UploadNote() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
+    // Load faculties on mount
     useEffect(() => {
-        if (user?.major_id) {
-            api.get(`/subjects?majorId=${user.major_id}`).then((r) => setSubjects(r.data)).catch(() => { });
+        api.get('/faculties').then((r) => setFaculties(r.data)).catch(() => { });
+    }, []);
+
+    // Pre-select user's faculty and major
+    useEffect(() => {
+        if (user?.faculty_id && faculties.length > 0) {
+            setSelectedFacultyId(String(user.faculty_id));
         }
-    }, [user]);
+    }, [user, faculties]);
+
+    // Load majors when faculty changes
+    useEffect(() => {
+        if (selectedFacultyId) {
+            api.get(`/faculties/${selectedFacultyId}/majors`).then((r) => {
+                setMajors(r.data);
+                // Pre-select user's major if same faculty
+                if (user?.major_id && user?.faculty_id === Number(selectedFacultyId)) {
+                    setSelectedMajorId(String(user.major_id));
+                } else {
+                    setSelectedMajorId('');
+                }
+            }).catch(() => { });
+        } else {
+            setMajors([]);
+            setSelectedMajorId('');
+        }
+    }, [selectedFacultyId, user]);
+
+    // Load subjects when major changes
+    useEffect(() => {
+        if (selectedMajorId) {
+            api.get(`/subjects?majorId=${selectedMajorId}`).then((r) => {
+                setSubjects(r.data);
+                setSubjectId('');
+            }).catch(() => { });
+        } else {
+            setSubjects([]);
+            setSubjectId('');
+        }
+    }, [selectedMajorId]);
 
     const handleDrop = (e: DragEvent) => {
         e.preventDefault();
@@ -74,9 +119,39 @@ export default function UploadNote() {
                 <form className="upload-form glass-card" onSubmit={handleSubmit}>
                     {error && <div className="login-error">{error}</div>}
 
+                    {/* Faculty selector */}
+                    <div className="input-group">
+                        <label htmlFor="upload-faculty">Faculty</label>
+                        <select
+                            id="upload-faculty"
+                            className="select"
+                            value={selectedFacultyId}
+                            onChange={(e) => setSelectedFacultyId(e.target.value)}
+                        >
+                            <option value="">Select a faculty</option>
+                            {faculties.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Major selector */}
+                    <div className="input-group">
+                        <label htmlFor="upload-major">Major</label>
+                        <select
+                            id="upload-major"
+                            className="select"
+                            value={selectedMajorId}
+                            onChange={(e) => setSelectedMajorId(e.target.value)}
+                            disabled={!selectedFacultyId}
+                        >
+                            <option value="">Select a major</option>
+                            {majors.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Subject selector */}
                     <div className="input-group">
                         <label htmlFor="upload-subject">Subject</label>
-                        <select id="upload-subject" className="select" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required>
+                        <select id="upload-subject" className="select" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required disabled={!selectedMajorId}>
                             <option value="">Select a subject</option>
                             {subjects.map((s) => <option key={s.id} value={s.id}>{s.code} – {s.name} ({s.year_level})</option>)}
                         </select>

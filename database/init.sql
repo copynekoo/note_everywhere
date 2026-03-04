@@ -35,6 +35,7 @@ CREATE TABLE subjects (
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   student_id VARCHAR(10) NOT NULL UNIQUE,
+  name VARCHAR(100),
   faculty_id INTEGER REFERENCES faculties(id),
   major_id INTEGER REFERENCES majors(id),
   year INTEGER DEFAULT 1,
