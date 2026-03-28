@@ -184,3 +184,8 @@ INSERT INTO subjects (major_id, code, name, year_level) VALUES
   (2, '01205211', 'Circuit Analysis', 2026),
   (2, '01205212', 'Electronics I', 2026),
   (2, '01205311', 'Signal and Systems', 2027);
+
+ALTER TABLE notes
+  ADD COLUMN IF NOT EXISTS docling_status   VARCHAR(20) DEFAULT 'none',
+  ADD COLUMN IF NOT EXISTS docling_result   TEXT,
+  ADD COLUMN IF NOT EXISTS docling_progress INTEGER DEFAULT 0;

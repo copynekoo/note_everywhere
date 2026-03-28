@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +28,9 @@ interface NoteInfo {
     dislikes: number;
     comment_count: number;
     created_at: string;
+    docling_status?: string;
+    docling_result?: string;
+    docling_progress?: number;
 }
 
 interface Comment {
@@ -67,6 +70,14 @@ export default function NoteDetail() {
     const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    // Docling state
+    const [doclingProcessing, setDoclingProcessing] = useState(false);
+    const [doclingProgress, setDoclingProgress] = useState(0);
+    const [doclingMessage, setDoclingMessage] = useState('');
+    const [doclingError, setDoclingError] = useState<string | null>(null);
+    const [showDocResult, setShowDocResult] = useState(false);
+    const sseRef = useRef<AbortController | null>(null);
+
     const loadData = useCallback(async () => {
         if (!id) return;
         try {
@@ -105,6 +116,82 @@ export default function NoteDetail() {
         } catch (err) {
             console.error(err);
             setDeleting(false);
+        }
+    };
+
+    const handleProcessDocument = async () => {
+        if (!note || !id) return;
+        setDoclingProcessing(true);
+        setDoclingProgress(0);
+        setDoclingMessage('Connecting...');
+        setDoclingError(null);
+        setShowDocResult(false);
+
+        // Abort any existing SSE stream
+        if (sseRef.current) sseRef.current.abort();
+        const controller = new AbortController();
+        sseRef.current = controller;
+
+        try {
+            const token = localStorage.getItem('ne_token');
+            const response = await fetch(
+                `/api/docling/${id}/process`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    signal: controller.signal,
+                }
+            );
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || 'Failed to start processing');
+            }
+
+            const reader = response.body!.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, { stream: true });
+                const lines = buf.split('\n');
+                buf = lines.pop() ?? '';
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const parsed = JSON.parse(line.slice(6));
+                            if (parsed.progress !== undefined) {
+                                setDoclingProgress(parsed.progress);
+                            }
+                            if (parsed.message) {
+                                setDoclingMessage(parsed.message);
+                            }
+                            if (parsed.error) {
+                                setDoclingError(parsed.error);
+                            }
+                            if (parsed.done) {
+                                // Refresh note data to get the result
+                                const noteRes = await api.get(`/notes/${id}`);
+                                setNote(noteRes.data);
+                                if (!parsed.error) {
+                                    setShowDocResult(true);
+                                }
+                            }
+                        } catch { /* ignore parse errors */ }
+                    }
+                }
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name !== 'AbortError') {
+                setDoclingError(String(err));
+            }
+        } finally {
+            setDoclingProcessing(false);
         }
     };
 
@@ -154,6 +241,9 @@ export default function NoteDetail() {
         );
     };
 
+    const hasDoclingResult = note.docling_status === 'done' && note.docling_result;
+    const alreadyProcessed = note.docling_status === 'done';
+
     return (
         <div className="page container" id="note-detail-page">
             <div className="note-detail-layout">
@@ -195,6 +285,80 @@ export default function NoteDetail() {
                     {renderFileViewer() && (
                         <div className="file-viewer glass-card animate-fade-in">
                             {renderFileViewer()}
+                        </div>
+                    )}
+
+                    {/* Docling — Process Document */}
+                    {note.file_path && user && (
+                        <div className="docling-section glass-card animate-fade-in">
+                            <div className="docling-header">
+                                <div className="docling-title-row">
+                                    <span className="docling-icon">🤖</span>
+                                    <h3 className="docling-title">Document Processing</h3>
+                                    {alreadyProcessed && (
+                                        <span className="docling-badge docling-badge--done">Processed</span>
+                                    )}
+                                    {note.docling_status === 'error' && (
+                                        <span className="docling-badge docling-badge--error">Error</span>
+                                    )}
+                                </div>
+                                <button
+                                    id="process-document-btn"
+                                    className={`btn btn-process-doc ${doclingProcessing ? 'btn-process-doc--loading' : ''}`}
+                                    onClick={handleProcessDocument}
+                                    disabled={doclingProcessing}
+                                >
+                                    {doclingProcessing
+                                        ? '⚙️ Processing...'
+                                        : alreadyProcessed
+                                            ? '🔄 Re-process Document'
+                                            : '⚡ Process Document'}
+                                </button>
+                            </div>
+
+                            {/* Progress bar */}
+                            {doclingProcessing && (
+                                <div className="docling-progress-wrapper">
+                                    <div className="docling-progress-bar">
+                                        <div
+                                            className="docling-progress-fill"
+                                            style={{ width: `${doclingProgress}%` }}
+                                        />
+                                    </div>
+                                    <div className="docling-progress-meta">
+                                        <span className="docling-progress-msg">{doclingMessage}</span>
+                                        <span className="docling-progress-pct">{doclingProgress}%</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Error */}
+                            {doclingError && !doclingProcessing && (
+                                <div className="docling-error">
+                                    ⚠️ Processing failed. Please try again.
+                                </div>
+                            )}
+
+                            {/* Result toggle */}
+                            {hasDoclingResult && !doclingProcessing && (
+                                <button
+                                    className="btn btn-secondary btn-sm docling-toggle"
+                                    onClick={() => setShowDocResult((v) => !v)}
+                                >
+                                    {showDocResult ? '🔼 Hide Processed Content' : '🔽 View Processed Content'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Docling Result Panel */}
+                    {hasDoclingResult && showDocResult && !doclingProcessing && (
+                        <div className="docling-result glass-card animate-fade-in">
+                            <div className="docling-result-header">
+                                <h3>📄 Processed Document</h3>
+                                <span className="docling-result-hint">Extracted by Docling · Markdown format</span>
+                            </div>
+                            <pre className="docling-result-content">{note.docling_result}</pre>
                         </div>
                     )}
 

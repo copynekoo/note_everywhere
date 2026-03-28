@@ -31,6 +31,7 @@ app.use('/api/subjects', require('./routes/subjects'));
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/comments', require('./routes/comments'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/docling', require('./routes/docling'));
 
 // Health check
 app.get('/api/health', (req, res) => {
