@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const fs = require('fs');
 const path = require('path');
+const { OpenAI } = require('openai');
 const router = express.Router();
 
 // GET /api/notes?subjectId=...&sort=...&userId=...&search=...
@@ -358,6 +359,61 @@ router.get('/:noteId/related', async (req, res) => {
     } catch (err) {
         console.error('Related notes error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST /api/notes/:noteId/summarize
+router.post('/:noteId/summarize', auth, async (req, res) => {
+    try {
+        // Fetch note to check ownership (optional) and get docling_result
+        const noteRes = await db.query('SELECT docling_result, ai_summary, docling_status FROM notes WHERE id = $1', [req.params.noteId]);
+        if (noteRes.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+
+        const note = noteRes.rows[0];
+
+        if (note.docling_status !== 'done' || !note.docling_result) {
+            return res.status(400).json({ error: 'Note has not been successfully processed by Docling yet.' });
+        }
+
+        // If it already has an AI summary, return it to save tokens
+        if (note.ai_summary) {
+            return res.json({ ai_summary: note.ai_summary });
+        }
+
+        const openai = new OpenAI({
+            baseURL: 'https://api.deepseek.com',
+            apiKey: process.env.DEEPSEEK_API_KEY,
+        });
+
+        const completion = await openai.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a highly skilled expert in document and content analysis, summarization, and information organization, with advanced proficiency in extracting, structuring, and condensing content into clear, accurate, and well-organized summaries."
+                },
+                {
+                    role: "user",
+                    content: `Act as a highly skilled expert in content analysis and summarization, with advanced proficiency in extracting, organizing, and condensing information into clear, structured, and highly accurate summaries. Your task is to carefully analyze the provided content in its entirety, ensuring that every section, topic, or logical segment is thoroughly reviewed and logically categorized. Begin by identifying the overall structure of the content, including any chapters, headings, sections, topics, or natural breaks, and then produce a detailed summary for each part using clear and concise bullet points that highlight the key points, core ideas, and any essential data, insights, or instructions. Maintain the original meaning and context of the content while avoiding unnecessary reduction of important details, ensuring that the summaries are as minimally compressed as possible to preserve critical information. If the content contains instructions, guidelines, procedures, steps, or actionable items, prioritize clarity and completeness by capturing these elements in their entirety without significant summarization, presenting them in a clear, easy-to-follow format. Your final output should reflect a well-organized, section-by-section breakdown of the content, where each segment includes bullet point summaries that retain the depth and accuracy of the original material while enhancing readability and quick comprehension.
+
+Here is the content to summarize:
+
+${note.docling_result}`
+                }
+            ],
+            model: "deepseek-chat",
+            temperature: 0.3,
+            max_tokens: 4000,
+        });
+
+        const newSummary = completion.choices[0].message.content;
+
+        // Save back to database
+        await db.query('UPDATE notes SET ai_summary = $1 WHERE id = $2', [newSummary, req.params.noteId]);
+
+        res.json({ ai_summary: newSummary });
+    } catch (err) {
+        console.error('AI summarization error:', err);
+        res.status(500).json({ error: 'Internal server error while summarizing' });
     }
 });
 

@@ -328,3 +328,40 @@
     overflow-y: auto;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* Markdown Table Styles */
+.markdown-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-4) 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.markdown-preview th,
+.markdown-preview td {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.markdown-preview th {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.markdown-preview tr:last-child td {
+    border-bottom: none;
+}
+
+.markdown-preview tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}

@@ -6,6 +6,8 @@ import RatingWidget from '../components/RatingWidget';
 import CommentThread from '../components/CommentThread';
 import NoteCard from '../components/NoteCard';
 import StudentProfileModal from '../components/StudentProfileModal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './NoteDetail.css';
 
 interface NoteInfo {
@@ -31,6 +33,7 @@ interface NoteInfo {
     docling_status?: string;
     docling_result?: string;
     docling_progress?: number;
+    ai_summary?: string;
 }
 
 interface Comment {
@@ -75,8 +78,18 @@ export default function NoteDetail() {
     const [doclingProgress, setDoclingProgress] = useState(0);
     const [doclingMessage, setDoclingMessage] = useState('');
     const [doclingError, setDoclingError] = useState<string | null>(null);
-    const [showDocResult, setShowDocResult] = useState(false);
     const sseRef = useRef<AbortController | null>(null);
+
+    // AI state
+    const [aiProcessing, setAiProcessing] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'file' | 'raw' | 'summary'>('file');
+    const tabRef = useRef<HTMLDivElement>(null);
+
+    const handleViewProcessedContent = () => {
+        setActiveTab('raw');
+        tabRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const loadData = useCallback(async () => {
         if (!id) return;
@@ -125,7 +138,6 @@ export default function NoteDetail() {
         setDoclingProgress(0);
         setDoclingMessage('Connecting...');
         setDoclingError(null);
-        setShowDocResult(false);
 
         // Abort any existing SSE stream
         if (sseRef.current) sseRef.current.abort();
@@ -179,7 +191,7 @@ export default function NoteDetail() {
                                 const noteRes = await api.get(`/notes/${id}`);
                                 setNote(noteRes.data);
                                 if (!parsed.error) {
-                                    setShowDocResult(true);
+                                    // Removed setting showDocResult, tabs handle visibility natively
                                 }
                             }
                         } catch { /* ignore parse errors */ }
@@ -192,6 +204,21 @@ export default function NoteDetail() {
             }
         } finally {
             setDoclingProcessing(false);
+        }
+    };
+
+    const handleAiSummarize = async () => {
+        if (!note || !id) return;
+        setAiProcessing(true);
+        setAiError(null);
+        try {
+            const res = await api.post(`/notes/${id}/summarize`);
+            setNote({ ...note, ai_summary: res.data.ai_summary });
+            setActiveTab('summary');
+        } catch (err: any) {
+            setAiError(err.response?.data?.error || err.message || 'Failed to summarize');
+        } finally {
+            setAiProcessing(false);
         }
     };
 
@@ -281,12 +308,7 @@ export default function NoteDetail() {
                         )}
                     </div>
 
-                    {/* File Viewer */}
-                    {renderFileViewer() && (
-                        <div className="file-viewer glass-card animate-fade-in">
-                            {renderFileViewer()}
-                        </div>
-                    )}
+                    {/* File Viewer merged into tabs below */}
 
                     {/* Docling — Process Document */}
                     {note.file_path && user && (
@@ -343,22 +365,90 @@ export default function NoteDetail() {
                             {hasDoclingResult && !doclingProcessing && (
                                 <button
                                     className="btn btn-secondary btn-sm docling-toggle"
-                                    onClick={() => setShowDocResult((v) => !v)}
+                                    onClick={handleViewProcessedContent}
                                 >
-                                    {showDocResult ? '🔼 Hide Processed Content' : '🔽 View Processed Content'}
+                                    🔽 View Processed Content
                                 </button>
                             )}
                         </div>
                     )}
 
-                    {/* Docling Result Panel */}
-                    {hasDoclingResult && showDocResult && !doclingProcessing && (
-                        <div className="docling-result glass-card animate-fade-in">
-                            <div className="docling-result-header">
-                                <h3>📄 Processed Document</h3>
-                                <span className="docling-result-hint">Extracted by Docling · Markdown format</span>
+                    {/* Output Tabs */}
+                    {(note.file_path || note.external_link) && (
+                        <div className="output-tabs-container animate-fade-in" style={{ marginBottom: 'var(--space-6)' }} ref={tabRef}>
+                            <div className="tab-header" style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+                                <button
+                                    className={`btn btn-sm ${activeTab === 'file' ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => setActiveTab('file')}
+                                    style={{ borderRadius: 'var(--radius-md) var(--radius-md) 0 0', padding: 'var(--space-3) var(--space-5)', borderBottom: 'none' }}
+                                >
+                                    📎 File Viewer
+                                </button>
+                                {hasDoclingResult && (
+                                    <button
+                                        className={`btn btn-sm ${activeTab === 'raw' ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => setActiveTab('raw')}
+                                        style={{ borderRadius: 'var(--radius-md) var(--radius-md) 0 0', padding: 'var(--space-3) var(--space-5)', borderBottom: 'none' }}
+                                    >
+                                        📄 Raw File Content
+                                    </button>
+                                )}
+                                {note.ai_summary && (
+                                    <button
+                                        className={`btn btn-sm ${activeTab === 'summary' ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => setActiveTab('summary')}
+                                        style={{ borderRadius: 'var(--radius-md) var(--radius-md) 0 0', padding: 'var(--space-3) var(--space-5)', borderBottom: 'none' }}
+                                    >
+                                        ✨ AI Summary
+                                    </button>
+                                )}
                             </div>
-                            <pre className="docling-result-content">{note.docling_result}</pre>
+
+                            <div className="tab-content glass-card" style={{ borderTopLeftRadius: activeTab === 'file' ? '0' : '0', padding: activeTab === 'file' ? '0' : 'var(--space-6)' }}>
+                                {activeTab === 'file' && (
+                                    <div className="file-viewer-tab">
+                                        {renderFileViewer()}
+                                    </div>
+                                )}
+
+                                {activeTab === 'raw' && hasDoclingResult && (
+                                    <div className="docling-result-content-wrapper">
+                                        <div className="docling-result-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-4)', alignItems: 'center' }}>
+                                            <div>
+                                                <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>📄 Processed Document</h3>
+                                                <span className="docling-result-hint">Extracted by Docling · Markdown format</span>
+                                            </div>
+                                            {!note.ai_summary && (
+                                                <button
+                                                    className={`btn btn-sm btn-process-doc ${aiProcessing ? 'btn-process-doc--loading' : ''}`}
+                                                    onClick={handleAiSummarize}
+                                                    disabled={aiProcessing}
+                                                >
+                                                    {aiProcessing ? 'Generating Summary...' : '✨ Generate AI Summary'}
+                                                </button>
+                                            )}
+                                        </div>
+                                        {aiError && (
+                                            <div className="docling-error" style={{ marginBottom: 'var(--space-3)' }}>
+                                                ⚠️ {aiError}
+                                            </div>
+                                        )}
+                                        <pre className="docling-result-content">{note.docling_result}</pre>
+                                    </div>
+                                )}
+
+                                {activeTab === 'summary' && note.ai_summary && (
+                                    <div className="ai-summary-content">
+                                        <div className="docling-result-header" style={{ marginBottom: 'var(--space-4)' }}>
+                                            <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>✨ AI Summary</h3>
+                                            <span className="docling-result-hint">Generated by Deepseek</span>
+                                        </div>
+                                        <div className="markdown-preview" style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: 'var(--space-5)', borderRadius: 'var(--radius-md)', lineHeight: 1.7, overflowX: 'auto' }}>
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.ai_summary}</ReactMarkdown>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
