@@ -17,8 +17,8 @@
 }
 
 .ps-list-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
     display: flex;
@@ -31,7 +31,7 @@
 }
 
 .ps-list-card:hover {
-    border-color: var(--primary);
+    border-color: var(--accent-primary);
 }
 
 .ps-list-card-info {
@@ -60,12 +60,12 @@
     font-weight: 700;
     margin: var(--space-6) 0 var(--space-3);
     padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .ps-session-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: var(--space-4) var(--space-5);
     display: flex;
@@ -79,7 +79,7 @@
 .ps-session-score {
     font-size: var(--font-size-xl);
     font-weight: 800;
-    color: var(--primary);
+    color: var(--accent-primary);
 }
 
 .ps-empty {

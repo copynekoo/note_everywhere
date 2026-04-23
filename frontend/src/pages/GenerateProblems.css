@@ -17,8 +17,8 @@
 }
 
 .gen-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: var(--space-6);
     margin-bottom: var(--space-5);
@@ -44,19 +44,19 @@
     align-items: flex-start;
     gap: var(--space-3);
     padding: var(--space-4);
-    border: 2px solid var(--border);
+    border: 2px solid var(--border-light);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
 }
 
 .source-option:hover:not(.source-option--disabled) {
-    border-color: var(--primary);
+    border-color: var(--accent-primary);
     background: rgba(99, 102, 241, 0.05);
 }
 
 .source-option--selected {
-    border-color: var(--primary) !important;
+    border-color: var(--accent-primary) !important;
     background: rgba(99, 102, 241, 0.08) !important;
 }
 
@@ -67,7 +67,7 @@
 
 .source-option input[type="radio"] {
     margin-top: 2px;
-    accent-color: var(--primary);
+    accent-color: var(--accent-primary);
     flex-shrink: 0;
 }
 
@@ -130,8 +130,8 @@
 .difficulty-item input[type="number"] {
     width: 100%;
     padding: var(--space-2) var(--space-3);
-    background: var(--background);
-    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-size-base);
@@ -141,12 +141,12 @@
 
 .difficulty-item input[type="number"]:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--accent-primary);
 }
 
 .gen-divider {
     border: none;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-light);
     margin: var(--space-5) 0;
 }
 
