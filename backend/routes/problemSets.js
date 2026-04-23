@@ -401,15 +401,26 @@ router.post('/sessions/:sessionId/answer', auth, async (req, res) => {
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are a helpful tutor who evaluates student answers and provides brief, constructive feedback (2-4 sentences). Be specific about what is good, what is missing, or what is incorrect.'
+                        content: 'You are a helpful tutor evaluating student short answers. You must respond with ONLY a valid JSON object with exactly two keys: "feedback" (a brief 2-4 sentence string explaining what is correct or missing) and "isCorrect" (a boolean, true if the answer is reasonably correct or good enough to pass, false otherwise).'
                     },
                     {
                         role: 'user',
-                        content: `Question: ${problem.question}\n\nModel Answer: ${problem.correct_answer || '(No model answer provided)'}\n\nStudent Answer: ${answer}\n\nProvide brief feedback on what is correct, what could be improved, and any key concepts the student may have missed.`
+                        content: `Question: ${problem.question}\n\nModel Answer: ${problem.correct_answer || '(No model answer provided)'}\n\nStudent Answer: ${answer}`
                     }
                 ],
             });
-            aiFeedback = completion.choices[0].message.content.trim();
+
+            try {
+                let raw = completion.choices[0].message.content.trim();
+                raw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+                const evalData = JSON.parse(raw);
+                aiFeedback = evalData.feedback || 'No feedback provided.';
+                isCorrect = !!evalData.isCorrect;
+            } catch (err) {
+                console.error("Failed to parse subjective feedback:", err);
+                aiFeedback = "Failed to parse AI output: " + completion.choices[0].message.content.trim();
+                isCorrect = false;
+            }
         }
 
         await db.query(

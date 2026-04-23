@@ -149,7 +149,7 @@ export default function ProblemSet() {
                             {pct}% correct — {pct >= 80 ? 'Excellent work!' : pct >= 60 ? 'Good effort!' : 'Keep studying!'}
                         </p>
                         <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-6)' }}>
-                            (Objective questions only. Subjective answers were assessed by AI feedback.)
+                            (Subjective questions are graded automatically by AI)
                         </p>
                         <div className="ps-score-actions">
                             <Link
@@ -269,10 +269,7 @@ export default function ProblemSet() {
 
                     {/* Feedback */}
                     {answered && feedback && (
-                        <div className={`ps-feedback ${problem.type === 'subjective'
-                            ? 'ps-feedback--subjective'
-                            : feedback.isCorrect ? 'ps-feedback--correct' : 'ps-feedback--wrong'
-                            }`}>
+                        <div className={`ps-feedback ${feedback.isCorrect ? 'ps-feedback--correct' : 'ps-feedback--wrong'}`}>
                             {problem.type === 'objective' ? (
                                 <>
                                     <span className="ps-feedback-title" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -283,7 +280,11 @@ export default function ProblemSet() {
                                 </>
                             ) : (
                                 <>
-                                    <span className="ps-feedback-title" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Sparkles size={18} color="#0071e3" /> AI Feedback</span>
+                                    <span className="ps-feedback-title" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        {feedback.isCorrect ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                                        <Sparkles size={16} />
+                                        {feedback.isCorrect ? 'AI Evaluation: Pass' : 'AI Evaluation: Needs Improvement'}
+                                    </span>
                                     <span>{feedback.aiFeedback}</span>
                                 </>
                             )}

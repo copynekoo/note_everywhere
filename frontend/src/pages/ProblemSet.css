@@ -19,7 +19,7 @@
 }
 
 .ps-progress-bar {
-    background: var(--border);
+    background: var(--border-light);
     border-radius: 999px;
     height: 8px;
     overflow: hidden;
@@ -27,15 +27,15 @@
 
 .ps-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--primary-light, #818cf8));
+    background: linear-gradient(90deg, var(--accent-primary), var(--primary-light, #818cf8));
     border-radius: 999px;
     transition: width 0.4s ease;
 }
 
 /* Question card */
 .ps-question-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: var(--space-6);
     margin-bottom: var(--space-5);
@@ -60,7 +60,7 @@
 
 .ps-type-badge--objective {
     background: rgba(99, 102, 241, 0.15);
-    color: var(--primary);
+    color: var(--accent-primary);
 }
 
 .ps-type-badge--subjective {
@@ -111,19 +111,19 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    border: 2px solid var(--border);
+    border: 2px solid var(--border-light);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: border-color 0.18s, background 0.18s;
 }
 
 .ps-choice:hover:not(.ps-choice--disabled) {
-    border-color: var(--primary);
+    border-color: var(--accent-primary);
     background: rgba(99, 102, 241, 0.05);
 }
 
 .ps-choice--selected {
-    border-color: var(--primary) !important;
+    border-color: var(--accent-primary) !important;
     background: rgba(99, 102, 241, 0.08) !important;
 }
 
@@ -142,7 +142,7 @@
 }
 
 .ps-choice input[type="radio"] {
-    accent-color: var(--primary);
+    accent-color: var(--accent-primary);
     flex-shrink: 0;
 }
 
@@ -163,8 +163,8 @@
     width: 100%;
     min-height: 140px;
     padding: var(--space-3) var(--space-4);
-    background: var(--background);
-    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-size-base);
@@ -177,7 +177,7 @@
 
 .ps-subjective-area:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--accent-primary);
 }
 
 .ps-subjective-area:disabled {
@@ -221,8 +221,8 @@
 .ps-score-card {
     text-align: center;
     padding: var(--space-8);
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
 }
 
@@ -231,7 +231,7 @@
     font-weight: 800;
     line-height: 1;
     margin-bottom: var(--space-2);
-    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    background: linear-gradient(135deg, var(--accent-primary), #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
