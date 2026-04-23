@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
+import { Library, Building2, GraduationCap, ChevronDown, ChevronRight } from 'lucide-react';
 import './Browse.css';
 
 interface Faculty { id: number; name: string; }
@@ -50,16 +51,18 @@ export default function Browse() {
 
     return (
         <div className="page container" id="browse-page">
-            <h1 className="browse-title animate-fade-in">📚 Browse Subjects</h1>
+            <h1 className="browse-title animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Library size={32} color="#0071e3" /> Browse Subjects
+            </h1>
             <p className="browse-subtitle animate-fade-in">Explore faculties, majors, and subjects</p>
 
             <div className="faculty-list stagger">
                 {faculties.map((f) => (
                     <div key={f.id} className="faculty-item glass-card animate-fade-in" id={`faculty-${f.id}`}>
                         <button className="faculty-header" onClick={() => toggleFaculty(f.id)}>
-                            <span className="faculty-icon">🏛️</span>
+                            <span className="faculty-icon"><Building2 size={20} color="#0071e3" /></span>
                             <span className="faculty-name">{f.name}</span>
-                            <span className={`expand-icon ${expandedFaculty === f.id ? 'open' : ''}`}>▼</span>
+                            <span className="expand-icon">{expandedFaculty === f.id ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</span>
                         </button>
 
                         {expandedFaculty === f.id && majors[f.id] && (
@@ -67,9 +70,9 @@ export default function Browse() {
                                 {majors[f.id].map((m) => (
                                     <div key={m.id} className="major-item" id={`major-${m.id}`}>
                                         <button className="major-header" onClick={() => toggleMajor(m.id)}>
-                                            <span className="major-icon">📖</span>
+                                            <span className="major-icon"><GraduationCap size={18} color="#8e8e93" /></span>
                                             <span className="major-name">{m.name}</span>
-                                            <span className={`expand-icon ${expandedMajor === m.id ? 'open' : ''}`}>▼</span>
+                                            <span className="expand-icon">{expandedMajor === m.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
                                         </button>
 
                                         {expandedMajor === m.id && subjects[m.id] && (

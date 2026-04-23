@@ -1,0 +1,90 @@
+/* ProblemSetList.css */
+.ps-list-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4);
+}
+
+.ps-list-page h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: 0.25rem;
+}
+
+.ps-list-subtitle {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-6);
+}
+
+.ps-list-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    transition: border-color 0.2s;
+    flex-wrap: wrap;
+}
+
+.ps-list-card:hover {
+    border-color: var(--primary);
+}
+
+.ps-list-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+}
+
+.ps-list-card-title {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+}
+
+.ps-list-card-meta {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.ps-list-section-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin: var(--space-6) 0 var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border);
+}
+
+.ps-session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.ps-session-score {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.ps-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--space-8);
+    font-size: var(--font-size-sm);
+}

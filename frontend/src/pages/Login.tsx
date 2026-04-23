@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
+import { BookOpen } from 'lucide-react';
 import './Login.css';
 
 interface Faculty { id: number; name: string; }
@@ -78,7 +79,7 @@ export default function Login() {
             <div className="login-backdrop" />
             <div className="login-container animate-scale-in">
                 <div className="login-brand">
-                    <span className="login-logo">📝</span>
+                    <span className="login-logo"><BookOpen size={48} color="#0071e3" /></span>
                     <h1 className="login-title">NoteEverywhere</h1>
                     <p className="login-subtitle">Share & discover academic notes at Kasetsart University</p>
                 </div>

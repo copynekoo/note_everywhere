@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import NoteCard from '../components/NoteCard';
+import { Star, TrendingUp, Clock, Hand } from 'lucide-react';
 import './Dashboard.css';
 
 interface Note {
@@ -41,10 +42,12 @@ export default function Dashboard() {
         );
     }
 
-    const renderSection = (title: string, emoji: string, notes: Note[]) => (
+    const renderSection = (title: string, icon: React.ReactNode, notes: Note[]) => (
         <section className="dashboard-section animate-fade-in" key={title}>
             <div className="section-header">
-                <h2 className="section-title">{emoji} {title}</h2>
+                <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {icon} {title}
+                </h2>
             </div>
             {notes.length === 0 ? (
                 <div className="empty-state">
@@ -61,14 +64,16 @@ export default function Dashboard() {
     return (
         <div className="page container" id="dashboard-page">
             <div className="dashboard-hero">
-                <h1 className="dashboard-title animate-fade-in">Welcome back 👋</h1>
+                <h1 className="dashboard-title animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    Welcome back <Hand size={32} color="#0071e3" strokeWidth={1.5} />
+                </h1>
                 <p className="dashboard-subtitle animate-fade-in">Discover notes shared by your peers</p>
             </div>
             {data && (
                 <>
-                    {renderSection('Recommended for You', '⭐', data.recommended)}
-                    {renderSection('Trending & Popular', '🔥', data.popular)}
-                    {renderSection('Recently Added', '🕐', data.recent)}
+                    {renderSection('Recommended for You', <Star size={24} color="#f5a623" />, data.recommended)}
+                    {renderSection('Trending & Popular', <TrendingUp size={24} color="#0071e3" />, data.popular)}
+                    {renderSection('Recently Added', <Clock size={24} color="#8e8e93" />, data.recent)}
                 </>
             )}
         </div>

@@ -1,0 +1,270 @@
+/* NoteAnalytics.css */
+
+.an-header {
+    margin-bottom: var(--space-6);
+}
+
+.an-header-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.an-note-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ── Stat cards ── */
+.an-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.an-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.an-stat-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.an-stat-icon {
+    font-size: 1.6rem;
+    margin-bottom: var(--space-2);
+}
+
+.an-stat-value {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: var(--space-1);
+}
+
+.an-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ── Section card (for charts) ── */
+.an-section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-8);
+}
+
+.an-section-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-5);
+}
+
+.an-section-sub {
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.an-ps-title {
+    margin-bottom: var(--space-4);
+}
+
+/* ── Problem Set card ── */
+.an-ps-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
+    transition: border-color var(--transition-fast);
+}
+
+.an-ps-card:hover {
+    border-color: var(--border-light);
+}
+
+.an-ps-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    cursor: pointer;
+    user-select: none;
+    flex-wrap: wrap;
+}
+
+.an-ps-header:hover {
+    background: var(--bg-glass);
+}
+
+.an-ps-header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 0;
+}
+
+.an-ps-chevron {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.an-ps-name {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.an-ps-meta {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--space-1);
+}
+
+.an-ps-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
+}
+
+.an-ps-stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    gap: 2px;
+}
+
+.an-ps-stat-pill strong {
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+}
+
+.an-ps-body {
+    padding: 0 var(--space-6) var(--space-6);
+    border-top: 1px solid var(--border-subtle);
+    padding-top: var(--space-5);
+}
+
+.an-chart-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+}
+
+/* ── Problem table ── */
+.an-problem-table {
+    margin-top: var(--space-5);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.an-problem-table-head,
+.an-problem-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 70px 60px 70px 90px;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-xs);
+}
+
+.an-problem-table-head {
+    background: var(--bg-glass);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.an-problem-row {
+    border-top: 1px solid var(--border-subtle);
+    background: transparent;
+    transition: background var(--transition-fast);
+}
+
+.an-problem-row:hover {
+    background: var(--bg-glass);
+}
+
+.an-prob-num {
+    font-weight: 700;
+    color: var(--text-accent);
+}
+
+.an-prob-q {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Custom tooltip ── */
+.an-tooltip {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-xs);
+    color: var(--text-primary);
+    max-width: 260px;
+    line-height: 1.6;
+}
+
+.an-tooltip-q {
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    color: var(--text-accent);
+    word-break: break-word;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+
+    .an-problem-table-head,
+    .an-problem-row {
+        grid-template-columns: 32px 1fr 60px 55px;
+    }
+
+    .an-problem-table-head span:nth-child(5),
+    .an-problem-table-head span:nth-child(6),
+    .an-problem-row span:nth-child(5),
+    .an-problem-row span:nth-child(6) {
+        display: none;
+    }
+
+    .an-ps-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

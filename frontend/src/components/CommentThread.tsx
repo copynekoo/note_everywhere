@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import StudentProfileModal from './StudentProfileModal';
+import { MessageSquare, User } from 'lucide-react';
 import './CommentThread.css';
 
 interface Comment {
@@ -87,8 +88,9 @@ export default function CommentThread({ noteId, comments, onRefresh }: CommentTh
                     className="comment-author clickable-student-id"
                     onClick={() => setProfileStudentId(c.commenter_student_id)}
                     title="View profile"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
                 >
-                    🎓 {formatCommenter(c)}
+                    <User size={14} color="#8e8e93" /> {formatCommenter(c)}
                 </span>
                 <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
             </div>
@@ -126,13 +128,15 @@ export default function CommentThread({ noteId, comments, onRefresh }: CommentTh
 
     return (
         <div className="comment-thread" id="comment-thread">
-            <h3 className="section-title">💬 Comments ({comments.length})</h3>
+            <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <MessageSquare size={20} color="#0071e3" /> Comments ({comments.length})
+            </h3>
 
             <form className="comment-form" onSubmit={handleSubmit}>
                 {replyTo && (
                     <div className="reply-indicator">
                         Replying to comment...
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReplyTo(null)}>✕</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReplyTo(null)}></button>
                     </div>
                 )}
                 <textarea

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import NoteCard from '../components/NoteCard';
+import { BookOpen, FileQuestion } from 'lucide-react';
 import './SubjectDetail.css';
 
 interface SubjectInfo {
@@ -100,14 +101,16 @@ export default function SubjectDetail() {
                             onClick={toggleFollow}
                             id="follow-btn"
                         >
-                            {following ? '✓ Following' : '+ Follow'}
+                            {following ? ' Following' : '+ Follow'}
                         </button>
                     )}
                 </div>
             </div>
 
             <div className="subject-notes-header">
-                <h2 className="section-title">📄 Notes ({notes.length})</h2>
+                <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <BookOpen size={24} color="#0071e3" /> Notes ({notes.length})
+                </h2>
                 <div className="sort-controls">
                     <select className="select" value={sort} onChange={(e) => setSort(e.target.value)} id="sort-select">
                         <option value="newest">Newest First</option>
@@ -120,7 +123,7 @@ export default function SubjectDetail() {
 
             {notes.length === 0 ? (
                 <div className="empty-state">
-                    <div className="empty-icon">📭</div>
+                    <div className="empty-icon"><FileQuestion size={48} color="#94a3b8" strokeWidth={1.5} /></div>
                     <p>No notes uploaded for this subject yet.</p>
                     <Link to="/upload" className="btn btn-primary">Be the first to upload!</Link>
                 </div>

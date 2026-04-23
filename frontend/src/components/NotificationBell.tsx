@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
+import { Bell, FileText, MessageSquare } from 'lucide-react';
 import './NotificationBell.css';
 
 export default function NotificationBell() {
@@ -31,7 +32,7 @@ export default function NotificationBell() {
     return (
         <div className="notification-bell dropdown" ref={ref} id="notification-bell">
             <button className="bell-btn btn btn-ghost btn-icon" onClick={() => setOpen(!open)} id="bell-toggle">
-                🔔
+                <Bell size={20} color="var(--text-primary)" />
                 {unreadCount > 0 && <span className="bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
             </button>
 
@@ -54,8 +55,8 @@ export default function NotificationBell() {
                                     onClick={() => handleClick(n)}
                                     id={`notif-${n.id}`}
                                 >
-                                    <span className="notif-icon">
-                                        {n.type === 'new_note' ? '📝' : n.type === 'new_comment' ? '💬' : '🔔'}
+                                    <span className="notif-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {n.type === 'new_note' ? <FileText size={16} color="#0071e3" /> : n.type === 'new_comment' ? <MessageSquare size={16} color="#10b981" /> : <Bell size={16} color="#f5a623" />}
                                     </span>
                                     <div className="notif-content">
                                         <p className="notif-message">{n.message}</p>

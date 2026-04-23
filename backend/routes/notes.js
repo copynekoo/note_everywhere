@@ -7,6 +7,17 @@ const path = require('path');
 const { OpenAI } = require('openai');
 const router = express.Router();
 
+// Optional auth middleware — attaches req.user if token present but doesn't reject
+const optAuth = (req, res, next) => {
+    const header = req.headers.authorization;
+    if (!header) return next();
+    const jwt = require('jsonwebtoken');
+    try {
+        req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+    } catch (_) { /* ignore invalid token */ }
+    next();
+};
+
 // GET /api/notes?subjectId=...&sort=...&userId=...&search=...
 router.get('/', async (req, res) => {
     try {
@@ -137,7 +148,7 @@ router.get('/dashboard', auth, async (req, res) => {
 });
 
 // GET /api/notes/:noteId
-router.get('/:noteId', async (req, res) => {
+router.get('/:noteId', optAuth, async (req, res) => {
     try {
         const result = await db.query(`
       SELECT n.*, u.student_id as uploader_student_id, u.name as uploader_name,
@@ -161,9 +172,130 @@ router.get('/:noteId', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Note not found' });
         }
+
+        // Track view (fire-and-forget)
+        db.query(
+            'INSERT INTO note_views (note_id, user_id) VALUES ($1, $2)',
+            [req.params.noteId, req.user?.id || null]
+        ).catch(() => { });
+
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Note detail error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /api/notes/:noteId/analytics
+router.get('/:noteId/analytics', auth, async (req, res) => {
+    try {
+        const noteId = req.params.noteId;
+
+        // Verify note exists
+        const noteRes = await db.query(
+            `SELECT n.id, n.title, n.user_id, u.student_id as creator_student_id,
+                COALESCE(SUM(r.value), 0) as rating_score,
+                COUNT(DISTINCT r.id) FILTER (WHERE r.value = 1) as likes,
+                COUNT(DISTINCT r.id) FILTER (WHERE r.value = -1) as dislikes,
+                COUNT(DISTINCT c.id) as comment_count
+             FROM notes n
+             JOIN users u ON n.user_id = u.id
+             LEFT JOIN ratings r ON r.note_id = n.id
+             LEFT JOIN comments c ON c.note_id = n.id
+             WHERE n.id = $1
+             GROUP BY n.id, n.title, n.user_id, u.student_id`,
+            [noteId]
+        );
+        if (noteRes.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
+        const note = noteRes.rows[0];
+
+        // Total views
+        const totalViewsRes = await db.query(
+            'SELECT COUNT(*) FROM note_views WHERE note_id = $1', [noteId]
+        );
+        const totalViews = parseInt(totalViewsRes.rows[0].count);
+
+        // Unique viewers
+        const uniqueViewersRes = await db.query(
+            'SELECT COUNT(DISTINCT user_id) FROM note_views WHERE note_id = $1 AND user_id IS NOT NULL', [noteId]
+        );
+        const uniqueViewers = parseInt(uniqueViewersRes.rows[0].count);
+
+        // Views per day (last 30 days)
+        const viewsByDayRes = await db.query(
+            `SELECT DATE(viewed_at) as date, COUNT(*) as views
+             FROM note_views
+             WHERE note_id = $1 AND viewed_at >= NOW() - INTERVAL '30 days'
+             GROUP BY DATE(viewed_at)
+             ORDER BY date ASC`,
+            [noteId]
+        );
+
+        // Problem sets for this note
+        const problemSetsRes = await db.query(
+            `SELECT ps.id, ps.title, ps.created_at,
+                COUNT(DISTINCT pss.id) as total_sessions,
+                COUNT(DISTINCT pss.id) FILTER (WHERE pss.completed = true) as completed_sessions,
+                COALESCE(AVG(pss.score) FILTER (WHERE pss.completed = true), 0) as avg_score
+             FROM problem_sets ps
+             LEFT JOIN problem_set_sessions pss ON pss.problem_set_id = ps.id
+             WHERE ps.note_id = $1
+             GROUP BY ps.id, ps.title, ps.created_at
+             ORDER BY ps.created_at DESC`,
+            [noteId]
+        );
+
+        // Per-problem first-try pass rates for each problem set
+        const problemSets = problemSetsRes.rows;
+        for (const ps of problemSets) {
+            // Get all problems in this set
+            const problemsRes = await db.query(
+                `SELECT p.id, p.question, p.type, p.difficulty, p.position
+                 FROM problems p WHERE p.problem_set_id = $1 ORDER BY p.position`,
+                [ps.id]
+            );
+
+            // For each problem, count first-try attempts and how many were correct
+            const problemStats = [];
+            for (const prob of problemsRes.rows) {
+                const statsRes = await db.query(
+                    `SELECT
+                        COUNT(*) as total_attempts,
+                        COUNT(*) FILTER (WHERE is_correct = true) as correct_attempts
+                     FROM (
+                         SELECT DISTINCT ON (pss.user_id)
+                             pa.is_correct
+                         FROM problem_attempts pa
+                         JOIN problem_set_sessions pss ON pa.session_id = pss.id
+                         WHERE pa.problem_id = $1
+                         ORDER BY pss.user_id, pss.started_at ASC
+                     ) first_attempts`,
+                    [prob.id]
+                );
+                const s = statsRes.rows[0];
+                const total = parseInt(s.total_attempts);
+                const correct = parseInt(s.correct_attempts);
+                problemStats.push({
+                    id: prob.id,
+                    question: prob.question,
+                    type: prob.type,
+                    difficulty: prob.difficulty,
+                    position: prob.position,
+                    totalFirstTryAttempts: total,
+                    correctFirstTryAttempts: correct,
+                    firstTryPassRate: total > 0 ? Math.round((correct / total) * 100) : null,
+                });
+            }
+            ps.problems = problemStats;
+        }
+
+        res.json({
+            note: { ...note, totalViews, uniqueViewers },
+            viewsByDay: viewsByDayRes.rows,
+            problemSets,
+        });
+    } catch (err) {
+        console.error('Note analytics error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

@@ -3,6 +3,7 @@ import type { FormEvent, DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { UploadCloud, Upload, Globe, Lock } from 'lucide-react';
 import './UploadNote.css';
 
 interface Faculty { id: number; name: string; }
@@ -113,7 +114,9 @@ export default function UploadNote() {
     return (
         <div className="page container" id="upload-page">
             <div className="upload-wrapper animate-fade-in">
-                <h1 className="upload-title">📤 Upload Note</h1>
+                <h1 className="upload-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                    <UploadCloud size={32} color="#0071e3" /> Upload Note
+                </h1>
                 <p className="upload-subtitle">Share your notes with fellow students</p>
 
                 <form className="upload-form glass-card" onSubmit={handleSubmit}>
@@ -180,13 +183,13 @@ export default function UploadNote() {
                         >
                             {file ? (
                                 <div className="file-preview">
-                                    <span className="file-preview-name">📎 {file.name}</span>
+                                    <span className="file-preview-name"> {file.name}</span>
                                     <span className="file-preview-size">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
-                                    <button type="button" className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setFile(null); }}>✕</button>
+                                    <button type="button" className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setFile(null); }}></button>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="drop-icon">📁</div>
+                                    <div className="drop-icon"></div>
                                     <p>Drag & drop your file here, or click to browse</p>
                                     <p style={{ fontSize: '0.75rem', marginTop: '4px' }}>PDF, Images, Docs, Audio, Video • Max 50MB</p>
                                 </>
@@ -209,12 +212,16 @@ export default function UploadNote() {
                     <div className="upload-visibility">
                         <label className="visibility-toggle">
                             <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} id="public-toggle" />
-                            <span className="visibility-label">{isPublic ? '🌐 Public' : '🔒 Private'}</span>
+                            <span className="visibility-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                {isPublic ? <Globe size={16} /> : <Lock size={16} />}
+                                {isPublic ? 'Public' : 'Private'}
+                            </span>
                         </label>
                     </div>
 
-                    <button type="submit" className="btn btn-primary btn-lg" disabled={submitting} id="upload-submit">
-                        {submitting ? 'Uploading...' : '📤 Upload Note'}
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={submitting} id="upload-submit" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                        <Upload size={18} />
+                        {submitting ? 'Uploading...' : 'Upload Note'}
                     </button>
                 </form>
             </div>

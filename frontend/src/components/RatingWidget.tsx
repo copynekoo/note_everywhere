@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import './RatingWidget.css';
 
 interface RatingWidgetProps {
@@ -50,7 +51,7 @@ export default function RatingWidget({ noteId, initialScore, initialLikes, initi
                 id="like-btn"
                 title="Like"
             >
-                <span className="rate-icon">👍</span>
+                <span className="rate-icon"><ThumbsUp size={16} /></span>
                 <span className="rate-count">{likes}</span>
             </button>
             <span className={`rating-score ${score > 0 ? 'positive' : score < 0 ? 'negative' : ''}`}>
@@ -63,7 +64,7 @@ export default function RatingWidget({ noteId, initialScore, initialLikes, initi
                 id="dislike-btn"
                 title="Dislike"
             >
-                <span className="rate-icon">👎</span>
+                <span className="rate-icon"><ThumbsDown size={16} /></span>
                 <span className="rate-count">{dislikes}</span>
             </button>
         </div>
