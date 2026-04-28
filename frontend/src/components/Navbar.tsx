@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
-import { Home, Library, Upload, GraduationCap, Edit3, NotebookText, Check, X } from 'lucide-react';
+import { Home, Library, Upload, GraduationCap, Edit3, NotebookText, Check, X, Bookmark } from 'lucide-react';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -10,6 +10,7 @@ export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
     const [editingName, setEditingName] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const [nameInput, setNameInput] = useState(user?.name || '');
     const [saving, setSaving] = useState(false);
 
@@ -66,7 +67,7 @@ export default function Navbar() {
 
                 <div className="navbar-actions">
                     <NotificationBell />
-                    <div className="user-menu">
+                    <div className="user-menu" style={{ position: 'relative' }}>
                         {editingName ? (
                             <div className="name-edit-inline">
                                 <input
@@ -90,24 +91,34 @@ export default function Navbar() {
                                 </button>
                             </div>
                         ) : (
-                            <>
-                                <span className="user-id" title={user?.student_id || ''}>
-                                    <GraduationCap size={16} style={{ marginRight: 4, verticalAlign: 'text-bottom' }} />
-                                    {displayIdentity}
-                                </span>
+                            <button
+                                className="btn btn-ghost user-id-btn"
+                                onClick={() => setMenuOpen(!menuOpen)}
+                                title={user?.student_id || ''}
+                            >
+                                <GraduationCap size={16} style={{ marginRight: 4 }} />
+                                {displayIdentity}
+                            </button>
+                        )}
+
+                        {menuOpen && !editingName && (
+                            <div className="user-dropdown">
                                 <button
-                                    className="btn btn-ghost btn-sm"
-                                    onClick={() => { setNameInput(user?.name || ''); setEditingName(true); }}
-                                    title="Edit display name"
+                                    className="dropdown-item"
+                                    onClick={() => { setNameInput(user?.name || ''); setEditingName(true); setMenuOpen(false); }}
                                     id="edit-name-btn"
                                 >
-                                    <Edit3 size={16} />
+                                    <Edit3 size={16} /> Edit display name
                                 </button>
-                            </>
+                                <Link to="/bookmarks" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                                    <Bookmark size={16} /> View Bookmarks
+                                </Link>
+                                <div className="dropdown-divider" />
+                                <button className="dropdown-item text-danger" onClick={handleLogout} id="logout-btn">
+                                    Logout
+                                </button>
+                            </div>
                         )}
-                        <button className="btn btn-ghost btn-sm" onClick={handleLogout} id="logout-btn">
-                            Logout
-                        </button>
                     </div>
                 </div>
             </div>

@@ -246,6 +246,60 @@ router.get('/sessions/:sessionId/history', auth, async (req, res) => {
     }
 });
 
+// POST /api/problem-sets/problems/:id/evaluate – evaluate an answer out of session (e.g. from bookmarks)
+router.post('/problems/:id/evaluate', auth, async (req, res) => {
+    try {
+        const { answer } = req.body;
+        const problemId = req.params.id;
+
+        if (answer === undefined) return res.status(400).json({ error: 'answer is required' });
+
+        const problemRes = await db.query('SELECT * FROM problems WHERE id = $1', [problemId]);
+        if (problemRes.rows.length === 0) return res.status(404).json({ error: 'Problem not found' });
+        const problem = problemRes.rows[0];
+
+        let isCorrect = null;
+        let aiFeedback = null;
+
+        if (problem.type === 'objective') {
+            isCorrect = answer.trim().toUpperCase() === (problem.correct_answer || '').trim().toUpperCase();
+            aiFeedback = problem.explanation || null;
+        } else {
+            const completion = await openai.chat.completions.create({
+                model: 'deepseek-chat',
+                temperature: 0.5,
+                max_tokens: 600,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful tutor evaluating student short answers. You must respond with ONLY a valid JSON object with exactly two keys: "feedback" (a brief 2-4 sentence string explaining what is correct or missing) and "isCorrect" (a boolean, true if the answer is reasonably correct or good enough to pass, false otherwise).'
+                    },
+                    {
+                        role: 'user',
+                        content: `Question: ${problem.question}\n\nModel Answer: ${problem.correct_answer || '(No model answer provided)'}\n\nStudent Answer: ${answer}`
+                    }
+                ],
+            });
+
+            try {
+                let raw = completion.choices[0].message.content.trim();
+                raw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+                const evalData = JSON.parse(raw);
+                aiFeedback = evalData.feedback || 'No feedback provided.';
+                isCorrect = !!evalData.isCorrect;
+            } catch (err) {
+                console.error("Failed to parse subjective feedback:", err);
+                aiFeedback = "Failed to parse AI output: " + completion.choices[0].message.content.trim();
+                isCorrect = false;
+            }
+        }
+        res.json({ isCorrect, aiFeedback, correctAnswer: problem.type === 'objective' ? problem.correct_answer : null });
+    } catch (err) {
+        console.error('Evaluate answer error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // GET /api/problem-sets/:id – get full problem set with problems & choices
 router.get('/:id', auth, async (req, res) => {
     try {

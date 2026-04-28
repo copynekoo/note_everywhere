@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import {
     AlertTriangle, Trophy, ThumbsUp, Book, History, BookOpen,
-    ArrowLeft, PlayCircle, CheckCircle, XCircle, Sparkles, Cpu, Flag
+    ArrowLeft, PlayCircle, CheckCircle, XCircle, Sparkles, Cpu, Flag, Bookmark
 } from 'lucide-react';
 import './ProblemSet.css';
 
@@ -35,6 +35,63 @@ export default function ProblemSet() {
     const [error, setError] = useState<string | null>(null);
     const [resumed, setResumed] = useState(false);
 
+    const [bookmarkedSet, setBookmarkedSet] = useState(false);
+    const [bookmarkedProblems, setBookmarkedProblems] = useState<Set<number>>(new Set());
+    const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+    const toggleBookmarkSet = async () => {
+        if (!problemSet || bookmarkLoading) return;
+        setBookmarkLoading(true);
+        try {
+            if (bookmarkedSet) {
+                await api.delete(`/bookmarks/problem_set/${problemSet.id}`);
+                setBookmarkedSet(false);
+            } else {
+                await api.post('/bookmarks', {
+                    item_type: 'problem_set',
+                    item_id: problemSet.id,
+                    title: problemSet.title
+                });
+                setBookmarkedSet(true);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setBookmarkLoading(false);
+        }
+    };
+
+    const toggleBookmarkProblem = async () => {
+        if (!problemSet || bookmarkLoading) return;
+        const prob = problemSet.problems[currentIdx];
+        setBookmarkLoading(true);
+        try {
+            if (bookmarkedProblems.has(prob.id)) {
+                await api.delete(`/bookmarks/problem/${prob.id}`);
+                setBookmarkedProblems(prev => {
+                    const next = new Set(prev);
+                    next.delete(prob.id);
+                    return next;
+                });
+            } else {
+                await api.post('/bookmarks', {
+                    item_type: 'problem',
+                    item_id: prob.id,
+                    title: `Problem ${currentIdx + 1} from ${problemSet.title}`
+                });
+                setBookmarkedProblems(prev => {
+                    const next = new Set(prev);
+                    next.add(prob.id);
+                    return next;
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setBookmarkLoading(false);
+        }
+    };
+
     // Per-question state
     const [selectedChoice, setSelectedChoice] = useState<string>('');
     const [subjectiveAnswer, setSubjectiveAnswer] = useState('');
@@ -51,6 +108,23 @@ export default function ProblemSet() {
             // Fetch problem set
             const psRes = await api.get(`/problem-sets/${id}`);
             setProblemSet(psRes.data);
+
+            // Check bookmarks
+            try {
+                const bmRes = await api.get('/bookmarks');
+                const bms = bmRes.data;
+                const bookmarkedProbs = new Set<number>();
+                bms.forEach((b: any) => {
+                    if (b.item_type === 'problem_set' && String(b.item_id) === String(id)) {
+                        setBookmarkedSet(true);
+                    } else if (b.item_type === 'problem') {
+                        bookmarkedProbs.add(b.item_id);
+                    }
+                });
+                setBookmarkedProblems(bookmarkedProbs);
+            } catch (e) {
+                console.error('Load bookmarks failed', e);
+            }
 
             // Start or resume session
             const sessionRes = await api.post(`/problem-sets/${id}/sessions`);
@@ -183,7 +257,17 @@ export default function ProblemSet() {
                 <Link to={`/note/${problemSet.note_id}/problem-sets`} className="btn btn-secondary btn-sm" style={{ marginBottom: 'var(--space-4)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                     <ArrowLeft size={16} /> Problem Sets
                 </Link>
-                <h2 style={{ marginBottom: 'var(--space-2)', fontSize: 'var(--font-size-xl)' }}>{problemSet.title}</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                    <h2 style={{ fontSize: 'var(--font-size-xl)', margin: 0 }}>{problemSet.title}</h2>
+                    <button
+                        className={`btn btn-sm ${bookmarkedSet ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={toggleBookmarkSet}
+                        disabled={bookmarkLoading}
+                        title="Bookmark Problem Set"
+                    >
+                        <Bookmark size={18} fill={bookmarkedSet ? "currentColor" : "none"} />
+                    </button>
+                </div>
 
                 {/* Resumed banner */}
                 {resumed && (
@@ -210,13 +294,23 @@ export default function ProblemSet() {
 
                 {/* Question */}
                 <div className="ps-question-card">
-                    <div className="ps-question-meta">
-                        <span className={`ps-type-badge ps-type-badge--${problem.type}`}>
-                            {problem.type === 'objective' ? ' Multiple Choice' : ' Short Answer'}
-                        </span>
-                        <span className={`ps-difficulty-badge ps-difficulty-badge--${problem.difficulty}`}>
-                            {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
-                        </span>
+                    <div className="ps-question-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            <span className={`ps-type-badge ps-type-badge--${problem.type}`}>
+                                {problem.type === 'objective' ? ' Multiple Choice' : ' Short Answer'}
+                            </span>
+                            <span className={`ps-difficulty-badge ps-difficulty-badge--${problem.difficulty}`}>
+                                {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+                            </span>
+                        </div>
+                        <button
+                            className={`btn btn-sm ${bookmarkedProblems.has(problem.id) ? 'btn-primary' : 'btn-ghost'}`}
+                            onClick={toggleBookmarkProblem}
+                            disabled={bookmarkLoading}
+                            title="Bookmark this Problem"
+                        >
+                            <Bookmark size={16} fill={bookmarkedProblems.has(problem.id) ? "currentColor" : "none"} />
+                        </button>
                     </div>
 
                     <p className="ps-question-text">

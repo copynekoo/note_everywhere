@@ -12,7 +12,7 @@ import { marked } from 'marked';
 import {
     Trash2, Settings, Sparkles, AlertTriangle,
     Download, ExternalLink, BrainCircuit, BookOpen,
-    BarChart2, FileText, Cpu
+    BarChart2, FileText, Cpu, Bookmark
 } from 'lucide-react';
 import './NoteDetail.css';
 
@@ -78,6 +78,30 @@ export default function NoteDetail() {
     const [loading, setLoading] = useState(true);
     const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [isBookmarked, setIsBookmarked] = useState(false);
+    const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+    const toggleBookmarkNote = async () => {
+        if (!note || bookmarkLoading) return;
+        setBookmarkLoading(true);
+        try {
+            if (isBookmarked) {
+                await api.delete(`/bookmarks/note/${note.id}`);
+                setIsBookmarked(false);
+            } else {
+                await api.post('/bookmarks', {
+                    item_type: 'note',
+                    item_id: note.id,
+                    title: note.title
+                });
+                setIsBookmarked(true);
+            }
+        } catch (err: any) {
+            console.error('Bookmark error:', err);
+        } finally {
+            setBookmarkLoading(false);
+        }
+    };
 
     // Docling state
     const [doclingProcessing, setDoclingProcessing] = useState(false);
@@ -288,6 +312,15 @@ export default function NoteDetail() {
             if (user) {
                 const rateRes = await api.get(`/notes/${id}/user-rating`);
                 setUserRating(rateRes.data.value);
+
+                try {
+                    const bmRes = await api.get('/bookmarks');
+                    if (bmRes.data.some((b: any) => b.item_type === 'note' && String(b.item_id) === String(id))) {
+                        setIsBookmarked(true);
+                    }
+                } catch (e) {
+                    console.error('Failed to load bookmarks');
+                }
             }
         } catch (err) {
             console.error(err);
@@ -477,19 +510,28 @@ export default function NoteDetail() {
                             <span> {note.subject_name}</span>
                             <span> {new Date(note.created_at).toLocaleDateString()}</span>
                         </div>
-                        {/* Delete button for owner */}
-                        {user && user.id === note.user_id && (
+                        <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: '0.75rem' }}>
                             <button
-                                className="btn btn-danger btn-sm"
-                                onClick={handleDelete}
-                                disabled={deleting}
-                                style={{ marginTop: '0.75rem' }}
-                                id="delete-note-btn"
+                                className={`btn btn-sm ${isBookmarked ? 'btn-primary' : 'btn-secondary'}`}
+                                onClick={toggleBookmarkNote}
+                                disabled={bookmarkLoading}
                             >
-                                {deleting ? <Settings size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                                {deleting ? ' Deleting...' : ' Delete Note'}
+                                <Bookmark size={14} fill={isBookmarked ? "currentColor" : "none"} />
+                                {bookmarkLoading ? '...' : isBookmarked ? 'Bookmarked' : 'Bookmark Note'}
                             </button>
-                        )}
+                            {/* Delete button for owner */}
+                            {user && user.id === note.user_id && (
+                                <button
+                                    className="btn btn-danger btn-sm"
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    id="delete-note-btn"
+                                >
+                                    {deleting ? <Settings size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                    {deleting ? ' Deleting...' : ' Delete Note'}
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* File Viewer merged into tabs below */}
