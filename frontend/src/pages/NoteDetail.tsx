@@ -8,6 +8,9 @@ import NoteCard from '../components/NoteCard';
 import StudentProfileModal from '../components/StudentProfileModal';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { marked } from 'marked';
 import {
     Trash2, Settings, Sparkles, AlertTriangle,
@@ -734,8 +737,13 @@ export default function NoteDetail() {
                                             {/* Scrollable body */}
                                             <div className="ai-summary-body" ref={summaryBodyRef}>
                                                 <div className="markdown-preview">
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                        {note.ai_summary}
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                                        rehypePlugins={[rehypeKatex]}
+                                                    >
+                                                        {note.ai_summary ? note.ai_summary
+                                                            .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+                                                            .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$') : ''}
                                                     </ReactMarkdown>
                                                 </div>
                                             </div>
