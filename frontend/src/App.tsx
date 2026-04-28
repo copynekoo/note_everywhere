@@ -14,6 +14,7 @@ import ProblemSet from './pages/ProblemSet';
 import ProblemSetHistory from './pages/ProblemSetHistory';
 import NoteAnalytics from './pages/NoteAnalytics';
 import Bookmarks from './pages/Bookmarks';
+import ProblemSetAnswers from './pages/ProblemSetAnswers';
 import { Bell } from 'lucide-react';
 import './index.css';
 
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/note/:id/problem-sets" element={<ProtectedRoute><ProblemSetList /></ProtectedRoute>} />
         <Route path="/note/:id/analytics" element={<ProtectedRoute><NoteAnalytics /></ProtectedRoute>} />
         <Route path="/problem-set/:id/take" element={<ProtectedRoute><ProblemSet /></ProtectedRoute>} />
+        <Route path="/problem-set/:id/answers" element={<ProtectedRoute><ProblemSetAnswers /></ProtectedRoute>} />
         <Route path="/problem-set/:id/session/:sessionId/history" element={<ProtectedRoute><ProblemSetHistory /></ProtectedRoute>} />
         <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />

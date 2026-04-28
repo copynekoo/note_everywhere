@@ -387,29 +387,39 @@ export default function ProblemSet() {
 
                     {error && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#ef4444', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-3)' }}><AlertTriangle size={14} /> {error}</div>}
 
-                    <div className="ps-nav-actions">
-                        {!answered ? (
+                    <div className="ps-nav-actions" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => setCurrentIdx(prev => prev - 1)}
+                            disabled={currentIdx === 0}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                            ← Previous
+                        </button>
+
+                        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            {!answered && (
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleSubmitAnswer}
+                                    disabled={submitting || (problem.type === 'objective' ? !selectedChoice : !subjectiveAnswer.trim())}
+                                    id="submit-answer-btn"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                                >
+                                    {submitting ? <Cpu size={16} className="animate-spin" /> : ''}
+                                    {submitting ? (problem.type === 'subjective' ? 'Evaluating…' : 'Submitting…') : 'Submit Answer'}
+                                </button>
+                            )}
                             <button
-                                className="btn btn-primary"
-                                onClick={handleSubmitAnswer}
-                                disabled={submitting || (problem.type === 'objective' ? !selectedChoice : !subjectiveAnswer.trim())}
-                                id="submit-answer-btn"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-                            >
-                                {submitting ? <Cpu size={16} className="animate-spin" /> : ''}
-                                {submitting ? (problem.type === 'subjective' ? 'Evaluating…' : 'Submitting…') : 'Submit Answer'}
-                            </button>
-                        ) : (
-                            <button
-                                className="btn btn-primary"
+                                className={answered ? "btn btn-primary" : "btn btn-secondary"}
                                 onClick={handleNext}
                                 id="next-question-btn"
                                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
                             >
                                 {currentIdx >= total - 1 ? <Flag size={16} /> : ''}
-                                {currentIdx >= total - 1 ? 'Finish & See Score' : 'Next Question →'}
+                                {currentIdx >= total - 1 ? 'Finish & See Score' : 'Next →'}
                             </button>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>

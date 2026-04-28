@@ -214,7 +214,10 @@ export default function Bookmarks() {
                                             <Link to={`/note/${b.item_id}`} className="btn btn-secondary btn-sm">View Note</Link>
                                         )}
                                         {b.item_type === 'problem_set' && (
-                                            <Link to={`/problem-set/${b.item_id}/take`} className="btn btn-secondary btn-sm">Take Set</Link>
+                                            <>
+                                                <Link to={`/problem-set/${b.item_id}/take`} className="btn btn-secondary btn-sm">Take Set</Link>
+                                                <Link to={`/problem-set/${b.item_id}/answers`} className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-secondary)' }}>View Answers</Link>
+                                            </>
                                         )}
                                         {/* For objective/problem, Review Problem is replaced by InlineProblem component */}
                                         <button className="btn btn-ghost btn-sm text-danger" onClick={() => deleteBookmark(b.item_type, b.item_id)}>
