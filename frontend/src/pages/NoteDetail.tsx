@@ -142,159 +142,183 @@ export default function NoteDetail() {
         if (!note?.ai_summary) return;
         setExportingPdf(true);
         try {
-            // Convert markdown → HTML using marked (produces real text, not image)
-            const htmlBody = marked.parse(note.ai_summary) as string;
+            // Pre-process LaTeX delimiters: convert \[...\] and \(...\) to $$...$$ and $...$
+            const processedMarkdown = note.ai_summary
+                .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+                .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+            const htmlBody = marked.parse(processedMarkdown) as string;
             const safeTitle = note.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
             const printHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>${safeTitle} – AI Summary</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 15px; }
-    body {
-      font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
-      color: #1a1a2e;
-      background: #fff;
-      padding: 2.5rem 3rem;
-      line-height: 1.8;
-      max-width: 860px;
-      margin: 0 auto;
-    }
-    /* Document title */
-    .doc-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #1a1a2e;
-      margin-bottom: 0.25rem;
-    }
-    .doc-meta {
-      font-size: 0.78rem;
-      color: #6b7280;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid #e5e7eb;
-    }
-    /* Headings */
-    h1, h2, h3, h4, h5, h6 {
-      font-weight: 700;
-      line-height: 1.3;
-      color: #111827;
-      margin-top: 1.6em;
-      margin-bottom: 0.5em;
-    }
-    h1 { font-size: 1.5rem; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; }
-    h2 { font-size: 1.2rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.2em; color: #4f46e5; }
-    h3 { font-size: 1.05rem; color: #6366f1; }
-    h4 { font-size: 0.95rem; color: #374151; }
-    h5, h6 { font-size: 0.875rem; color: #6b7280; }
-    /* Paragraphs */
-    p { margin-bottom: 0.85em; color: #374151; }
-    /* Lists */
-    ul, ol { margin: 0.5em 0 0.85em 1.6em; }
-    ul { list-style: none; }
-    ul > li { position: relative; padding-left: 0.2em; margin-bottom: 0.3em; }
-    ul > li::before { content: "•"; position: absolute; left: -1.1em; color: #6366f1; font-size: 1.1em; }
-    ul ul { margin-top: 0.25em; margin-bottom: 0.25em; }
-    ul ul > li::before { content: "◇"; color: #8b5cf6; font-size: 0.85em; }
-    ul ul ul > li::before { content: "–"; color: #9ca3af; }
-    ol { list-style: decimal; }
-    ol > li { padding-left: 0.2em; margin-bottom: 0.3em; color: #374151; }
-    ol ol { list-style: lower-alpha; margin-top: 0.25em; }
-    ol ol ol { list-style: lower-roman; }
-    li { color: #374151; }
-    /* Code */
-    code {
-      font-family: 'Fira Code', 'Courier New', monospace;
-      font-size: 0.82em;
-      background: #f3f0ff;
-      color: #5b21b6;
-      border: 1px solid #ddd6fe;
-      border-radius: 4px;
-      padding: 0.1em 0.4em;
-    }
-    pre {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 1em 1.25em;
-      overflow-x: auto;
-      margin: 0.75em 0;
-      page-break-inside: avoid;
-    }
-    pre code { background: none; border: none; padding: 0; color: #374151; font-size: 0.85rem; }
-    /* Blockquotes */
-    blockquote {
-      margin: 0.75em 0;
-      padding: 0.5em 1em;
-      border-left: 3px solid #6366f1;
-      background: #f5f3ff;
-      border-radius: 0 4px 4px 0;
-      color: #4b5563;
-      font-style: italic;
-    }
-    /* Horizontal rule */
-    hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
-    /* Bold / italic */
-    strong, b { font-weight: 700; color: #111827; }
-    em, i { font-style: italic; color: #374151; }
-    /* Links */
-    a { color: #4f46e5; text-decoration: underline; }
-    /* Tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1em 0;
-      font-size: 0.88rem;
-      page-break-inside: avoid;
-    }
-    th, td {
-      padding: 0.55rem 0.85rem;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
-      border-right: 1px solid #e5e7eb;
-    }
-    th {
-      background: #eef2ff;
-      font-weight: 700;
-      color: #312e81;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-    }
-    tr:last-child td { border-bottom: 2px solid #e5e7eb; }
-    td:last-child, th:last-child { border-right: none; }
-    table { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
-    /* Print settings */
-    @media print {
-      body { padding: 1.5rem 2rem; }
-      h1, h2, h3 { page-break-after: avoid; }
-      pre, table, blockquote { page-break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <div class="doc-title">${safeTitle}</div>
-  <div class="doc-meta">AI Summary &nbsp;·&nbsp; Generated by DeepSeek &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</div>
-  ${htmlBody}
-</body>
-</html>`;
+        <html lang="en">
+            <head>
+            <meta charset="UTF-8" />
+            <title>${safeTitle} – AI Summary</title>
+            <!-- KaTeX for math rendering -->
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" crossorigin="anonymous" />
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
+            <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+                onload="renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+                });"></script>
+            <style>
+                *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+                html { font-size: 15px; }
+                body {
+                font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+                color: #1a1a2e;
+                background: #fff;
+                padding: 2.5rem 3rem;
+                line-height: 1.8;
+                max-width: 860px;
+                margin: 0 auto;
+                }
+                .doc-title {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: #1a1a2e;
+                margin-bottom: 0.25rem;
+                }
+                .doc-meta {
+                font-size: 0.78rem;
+                color: #6b7280;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 2px solid #e5e7eb;
+                }
+                h1, h2, h3, h4, h5, h6 {
+                font-weight: 700;
+                line-height: 1.3;
+                color: #111827;
+                margin-top: 1.6em;
+                margin-bottom: 0.5em;
+                }
+                h1 { font-size: 1.5rem; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; }
+                h2 { font-size: 1.2rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.2em; color: #4f46e5; }
+                h3 { font-size: 1.05rem; color: #6366f1; }
+                h4 { font-size: 0.95rem; color: #374151; }
+                h5, h6 { font-size: 0.875rem; color: #6b7280; }
+                p { margin-bottom: 0.85em; color: #374151; }
+                ul, ol { margin: 0.5em 0 0.85em 1.6em; }
+                ul { list-style: none; }
+                ul > li { position: relative; padding-left: 0.2em; margin-bottom: 0.3em; }
+                ul > li::before { content: "•"; position: absolute; left: -1.1em; color: #6366f1; font-size: 1.1em; }
+                ul ul { margin-top: 0.25em; margin-bottom: 0.25em; }
+                ul ul > li::before { content: "◇"; color: #8b5cf6; font-size: 0.85em; }
+                ul ul ul > li::before { content: "–"; color: #9ca3af; }
+                ol { list-style: decimal; }
+                ol > li { padding-left: 0.2em; margin-bottom: 0.3em; color: #374151; }
+                ol ol { list-style: lower-alpha; margin-top: 0.25em; }
+                ol ol ol { list-style: lower-roman; }
+                li { color: #374151; }
+                code {
+                font-family: 'Fira Code', 'Courier New', monospace;
+                font-size: 0.82em;
+                background: #f3f0ff;
+                color: #5b21b6;
+                border: 1px solid #ddd6fe;
+                border-radius: 4px;
+                padding: 0.1em 0.4em;
+                }
+                pre {
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                padding: 1em 1.25em;
+                overflow-x: auto;
+                margin: 0.75em 0;
+                page-break-inside: avoid;
+                }
+                pre code { background: none; border: none; padding: 0; color: #374151; font-size: 0.85rem; }
+                blockquote {
+                margin: 0.75em 0;
+                padding: 0.5em 1em;
+                border-left: 3px solid #6366f1;
+                background: #f5f3ff;
+                border-radius: 0 4px 4px 0;
+                color: #4b5563;
+                font-style: italic;
+                }
+                hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
+                strong, b { font-weight: 700; color: #111827; }
+                em, i { font-style: italic; color: #374151; }
+                a { color: #4f46e5; text-decoration: underline; }
+                table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+                font-size: 0.88rem;
+                page-break-inside: avoid;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                overflow: hidden;
+                }
+                th, td {
+                padding: 0.55rem 0.85rem;
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+                border-right: 1px solid #e5e7eb;
+                }
+                th {
+                background: #eef2ff;
+                font-weight: 700;
+                color: #312e81;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.04em;
+                }
+                tr:last-child td { border-bottom: 2px solid #e5e7eb; }
+                td:last-child, th:last-child { border-right: none; }
+                /* KaTeX display math spacing */
+                .katex-display {
+                margin: 1em 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                }
+                @media print {
+                body { padding: 1.5rem 2rem; }
+                h1, h2, h3 { page-break-after: avoid; }
+                pre, table, blockquote, .katex-display { page-break-inside: avoid; }
+                }
+            </style>
+            </head>
+            <body>
+            <div class="doc-title">${safeTitle}</div>
+            <div class="doc-meta">AI Summary &nbsp;·&nbsp; Generated by DeepSeek &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</div>
+            ${htmlBody}
+            </body>
+            </html>`;
 
             const win = window.open('', '_blank', 'width=900,height=700');
             if (!win) { setExportingPdf(false); return; }
             win.document.write(printHtml);
             win.document.close();
-            // Give images/fonts a moment to load then trigger print dialog
+
+            // Wait for KaTeX scripts to load and render before printing
             win.onload = () => {
-                setTimeout(() => {
-                    win.print();
-                    setExportingPdf(false);
-                }, 400);
+                // Poll until renderMathInElement has run (KaTeX auto-render fires on DOMContentLoaded)
+                let attempts = 0;
+                const waitForKatex = setInterval(() => {
+                    attempts++;
+                    const hasKatex = win.document.querySelector('.katex') !== null;
+                    const timeout = attempts > 30; // ~3 seconds max
+                    if (hasKatex || timeout) {
+                        clearInterval(waitForKatex);
+                        setTimeout(() => {
+                            win.print();
+                            setExportingPdf(false);
+                        }, 200);
+                    }
+                }, 100);
             };
-            // Fallback in case onload already fired
-            setTimeout(() => setExportingPdf(false), 3000);
+
+            // Fallback
+            setTimeout(() => setExportingPdf(false), 8000);
         } catch (e) {
             console.error('PDF export failed:', e);
             setExportingPdf(false);

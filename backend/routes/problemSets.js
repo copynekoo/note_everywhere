@@ -449,7 +449,7 @@ router.post('/sessions/:sessionId/answer', auth, async (req, res) => {
         } else {
             // Subjective — dynamic AI feedback
             const completion = await openai.chat.completions.create({
-                model: 'deepseek-chat',
+                model: 'deepseek-v4-flash',
                 temperature: 0.5,
                 max_tokens: 600,
                 messages: [

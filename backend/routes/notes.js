@@ -521,7 +521,27 @@ router.post('/:noteId/summarize', auth, async (req, res) => {
             messages: [
                 {
                     role: "system",
-                    content: "You are a highly skilled expert in document and content analysis, summarization, and information organization, with advanced proficiency in extracting, structuring, and condensing content into clear, accurate, and well-organized summaries."
+                    content: `You are a highly skilled expert in document and content analysis, summarization, and information organization, with advanced proficiency in extracting, structuring, and condensing content into clear, accurate, and well-organized summaries.
+                    
+                    CRITICAL: All mathematical formulas MUST be written in LaTeX with backslashes.
+                    - Inline formulas: MUST use \\( ... \\)
+                    - Display formulas: MUST use \\[ ... \\]
+
+                    Examples of CORRECT output:
+                    \\( \\sigma = P/A \\)
+                    \\[ \\sigma = \\lim_{\\Delta A \\to 0} \\frac{\\Delta F}{\\Delta A} \\]
+                    \\( F_{BC} = 50 \\text{ kN} \\)
+                    \\( A = \\pi (10 \\text{ mm})^2 = 314 \\times 10^{-6} \\text{ m}^2 \\)
+
+                    Examples of WRONG output (NEVER use these):
+                    ( sigma = P/A )
+                    [ sigma = lim_{Delta A to 0} frac{Delta F}{Delta A} ]
+                    sigma = P/A (without any delimiters)
+
+                    You MUST include backslashes for: \\sigma, \\lim, \\frac, \\pi, \\text, \\Delta, \\to, \\times, \\sum, \\int.
+                    Never write "lim" without a backslash – always "\\lim".
+                    Never write "frac" without a backslash – always "\\frac".
+                    `
                 },
                 {
                     role: "user",
@@ -532,9 +552,9 @@ Here is the content to summarize:
 ${note.docling_result}`
                 }
             ],
-            model: "deepseek-chat",
+            model: "deepseek-v4-flash",
             temperature: 0.3,
-            max_tokens: 4000,
+            max_tokens: 6000,
         });
 
         const newSummary = completion.choices[0].message.content;

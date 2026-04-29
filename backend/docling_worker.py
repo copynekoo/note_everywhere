@@ -73,6 +73,7 @@ def main():
 
         # Configure pipeline — enable OCR for images, export as markdown
         pipeline_options = PdfPipelineOptions()
+        # pipeline_options.do_formula_enrichment = True
         pipeline_options.do_ocr = True
         pipeline_options.do_table_structure = True
 
